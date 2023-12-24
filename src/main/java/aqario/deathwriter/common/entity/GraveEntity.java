@@ -204,7 +204,7 @@ public class GraveEntity extends Entity implements InventoryChangedListener, Nam
 
     @Nullable
     public UUID getOwnerUuid() {
-        return (UUID)((Optional)this.dataTracker.get(OWNER)).orElse(null);
+        return this.dataTracker.get(OWNER).orElse(null);
     }
 
     public void setOwnerUuid(@Nullable UUID uuid) {
