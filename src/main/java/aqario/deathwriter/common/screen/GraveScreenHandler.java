@@ -1,24 +1,22 @@
 package aqario.deathwriter.common.screen;
 
+import aqario.deathwriter.common.entity.GraveEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.slot.Slot;
 
 public class GraveScreenHandler extends ScreenHandler {
+    public final GraveEntity grave;
     private final Inventory inventory;
 
-    public GraveScreenHandler(int syncId, PlayerInventory playerInventory) {
-        this(syncId, playerInventory, new SimpleInventory(54));
-    }
-
-    public GraveScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory) {
-        super(ScreenHandlerType.GENERIC_3X3, syncId);
+    public GraveScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory, GraveEntity grave) {
+        super(ScreenHandlerType.GENERIC_9X6, syncId);
         checkSize(inventory, 54);
+        this.grave = grave;
         this.inventory = inventory;
         inventory.onOpen(playerInventory.player);
 
@@ -42,22 +40,17 @@ public class GraveScreenHandler extends ScreenHandler {
     }
 
     @Override
-    public boolean canUse(PlayerEntity player) {
-        return this.inventory.canPlayerUse(player);
-    }
-
-    @Override
     public ItemStack quickTransfer(PlayerEntity player, int fromIndex) {
         ItemStack itemStack = ItemStack.EMPTY;
         Slot slot = this.slots.get(fromIndex);
         if (slot.hasStack()) {
             ItemStack itemStack2 = slot.getStack();
             itemStack = itemStack2.copy();
-            if (fromIndex < 9) {
-                if (!this.insertItem(itemStack2, 9, 45, true)) {
+            if (fromIndex < 54) {
+                if (!this.insertItem(itemStack2, 54, this.slots.size(), true)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (!this.insertItem(itemStack2, 0, 9, false)) {
+            } else if (!this.insertItem(itemStack2, 0, 54, false)) {
                 return ItemStack.EMPTY;
             }
 
@@ -66,15 +59,14 @@ public class GraveScreenHandler extends ScreenHandler {
             } else {
                 slot.markDirty();
             }
-
-            if (itemStack2.getCount() == itemStack.getCount()) {
-                return ItemStack.EMPTY;
-            }
-
-            slot.onTakeItem(player, itemStack2);
         }
 
         return itemStack;
+    }
+
+    @Override
+    public boolean canUse(PlayerEntity player) {
+        return this.grave.isAlive() && player.squaredDistanceTo(this.grave) <= 64;
     }
 
     @Override

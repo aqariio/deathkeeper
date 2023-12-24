@@ -1,6 +1,7 @@
 package aqario.deathwriter.common;
 
 import aqario.deathwriter.common.entity.DeathwriterEntityType;
+import aqario.deathwriter.common.network.DeathwriterMessages;
 import org.quiltmc.loader.api.ModContainer;
 import org.quiltmc.qsl.base.api.entrypoint.ModInitializer;
 import org.slf4j.Logger;
@@ -14,5 +15,6 @@ public class Deathwriter implements ModInitializer {
     public void onInitialize(ModContainer mod) {
         LOGGER.info("Loading {}", mod.metadata().name());
         DeathwriterEntityType.init();
+        DeathwriterMessages.init();
     }
 }

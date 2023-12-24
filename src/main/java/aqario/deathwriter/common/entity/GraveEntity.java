@@ -1,5 +1,9 @@
 package aqario.deathwriter.common.entity;
 
+import aqario.deathwriter.common.network.packet.s2c.OpenGraveScreenS2CPacket;
+import aqario.deathwriter.common.screen.GraveScreenHandler;
+import aqario.deathwriter.mixin.ServerPlayerEntityAccessor;
+import aqario.deathwriter.server.network.DeathwriterServerPlayNetworkHandler;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ItemEntity;
@@ -14,10 +18,10 @@ import net.minecraft.inventory.InventoryChangedListener;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.network.Packet;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
-import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -38,13 +42,13 @@ public class GraveEntity extends Entity implements InventoryChangedListener, Nam
     public static final TrackedData<Optional<UUID>> OWNER = DataTracker.registerData(GraveEntity.class, TrackedDataHandlerRegistry.OPTIONAL_UUID);
     public static final TrackedData<NbtCompound> INVENTORY = DataTracker.registerData(GraveEntity.class, TrackedDataHandlerRegistry.TAG_COMPOUND);
     public final float uniqueOffset;
-    private final SimpleInventory inventory;
+    private final SimpleInventory items;
 
     public GraveEntity(EntityType<?> type, World world) {
         super(type, world);
         this.uniqueOffset = this.random.nextFloat() * (float) Math.PI * 2.0F;
-        this.inventory = new SimpleInventory(54);
-        this.inventory.addListener(this);
+        this.items = new SimpleInventory(54);
+        this.items.addListener(this);
     }
 
     public static GraveEntity create(ServerPlayerEntity player) {
@@ -55,7 +59,7 @@ public class GraveEntity extends Entity implements InventoryChangedListener, Nam
 
         NbtList list = new NbtList();
         player.getInventory().writeNbt(list);
-        grave.inventory.readNbtList(list);
+        grave.items.readNbtList(list);
 
         grave.resetPosition();
         grave.refreshPosition();
@@ -69,10 +73,30 @@ public class GraveEntity extends Entity implements InventoryChangedListener, Nam
 
     @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
-        this.dataTracker.set(OWNER, Optional.of(player.getUuid()));
-        this.setCustomName(player.getName());
-        player.sendMessage(this.getDisplayName().copy().append(Text.literal(" open handled screen")), true);
+        player.sendMessage(Text.literal(this.dataTracker.get(OWNER) + " " + player.getUuid()), true);
+
+        if (!player.world.isClient && player.getStackInHand(hand).isEmpty()) {
+            openInventory((ServerPlayerEntity)player);
+            return ActionResult.CONSUME;
+        }
         return super.interact(player, hand);
+    }
+
+    public void openInventory(ServerPlayerEntity player) {
+        ServerPlayerEntityAccessor playerAccessor = (ServerPlayerEntityAccessor) player;
+        ScreenHandler screenHandler = createMenu(playerAccessor.getScreenHandlerSyncId() % 100 + 1, player.getInventory(), player);
+        if (screenHandler != null) {
+            playerAccessor.callIncrementScreenHandlerSyncId();
+            DeathwriterServerPlayNetworkHandler.sendPacket(player, new OpenGraveScreenS2CPacket(playerAccessor.getScreenHandlerSyncId(), this.getId()));
+            player.currentScreenHandler = screenHandler;
+            playerAccessor.callOnSpawn(player.currentScreenHandler);
+        }
+    }
+
+    @Nullable
+    @Override
+    public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity playerEntity) {
+        return new GraveScreenHandler(syncId, playerInventory, this.items, this);
     }
 
     @Override
@@ -124,6 +148,10 @@ public class GraveEntity extends Entity implements InventoryChangedListener, Nam
                 this.velocityDirty = true;
             }
         }
+
+        if (this.items.isEmpty() && !this.world.isClient) {
+            this.discard();
+        }
     }
 
     private void applyWaterBuoyancy() {
@@ -144,9 +172,9 @@ public class GraveEntity extends Entity implements InventoryChangedListener, Nam
             }
 
             if (player.getUuid() == this.dataTracker.get(OWNER).orElse(null)) {
-                if (this.inventory != null) {
-                    for (int i = 0; i < this.inventory.size(); ++i) {
-                        ItemStack itemStack = this.inventory.getStack(i);
+                if (this.items != null) {
+                    for (int i = 0; i < this.items.size(); ++i) {
+                        ItemStack itemStack = this.items.getStack(i);
                         if (itemStack.isEmpty()) continue;
                         this.dropStack(itemStack);
                     }
@@ -190,11 +218,33 @@ public class GraveEntity extends Entity implements InventoryChangedListener, Nam
     @Override
     protected void writeCustomDataToNbt(NbtCompound nbt) {
         nbt.putUuid("Owner", this.dataTracker.get(OWNER).orElse(null));
+        NbtList nbtList = new NbtList();
+
+        for(int i = 0; i < this.items.size(); ++i) {
+            ItemStack itemStack = this.items.getStack(i);
+            if (!itemStack.isEmpty()) {
+                NbtCompound nbtCompound = new NbtCompound();
+                nbtCompound.putByte("Slot", (byte)i);
+                itemStack.writeNbt(nbtCompound);
+                nbtList.add(nbtCompound);
+            }
+        }
+
+        nbt.put("Items", nbtList);
     }
 
     @Override
     protected void readCustomDataFromNbt(NbtCompound nbt) {
         this.dataTracker.set(OWNER, Optional.of(nbt.getUuid("Owner")));
+        NbtList nbtList = nbt.getList("Items", NbtElement.COMPOUND_TYPE);
+
+        for(int i = 0; i < nbtList.size(); ++i) {
+            NbtCompound nbtCompound = nbtList.getCompound(i);
+            int j = nbtCompound.getByte("Slot") & 255;
+            if (j < this.items.size()) {
+                this.items.setStack(j, ItemStack.fromNbt(nbtCompound));
+            }
+        }
     }
 
     public float getRotation(float tickDelta) {
@@ -218,11 +268,5 @@ public class GraveEntity extends Entity implements InventoryChangedListener, Nam
 
     @Override
     public void onInventoryChanged(Inventory sender) {
-    }
-
-    @Nullable
-    @Override
-    public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity playerEntity) {
-        return GenericContainerScreenHandler.createGeneric9x6(syncId, playerInventory, this.inventory);
     }
 }
