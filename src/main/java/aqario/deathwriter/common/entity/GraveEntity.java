@@ -27,7 +27,6 @@ import net.minecraft.screen.ScreenHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.tag.FluidTags;
-import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
@@ -73,8 +72,6 @@ public class GraveEntity extends Entity implements InventoryChangedListener, Nam
 
     @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
-        player.sendMessage(Text.literal(this.dataTracker.get(OWNER) + " " + player.getUuid()), true);
-
         if (!player.world.isClient && player.getStackInHand(hand).isEmpty()) {
             openInventory((ServerPlayerEntity)player);
             return ActionResult.CONSUME;
@@ -148,10 +145,6 @@ public class GraveEntity extends Entity implements InventoryChangedListener, Nam
                 this.velocityDirty = true;
             }
         }
-
-        if (this.items.isEmpty() && !this.world.isClient) {
-            this.discard();
-        }
     }
 
     private void applyWaterBuoyancy() {
@@ -171,7 +164,7 @@ public class GraveEntity extends Entity implements InventoryChangedListener, Nam
                 return;
             }
 
-            if (player.getUuid() == this.dataTracker.get(OWNER).orElse(null)) {
+            if (player.getUuid().equals(this.dataTracker.get(OWNER).orElse(null))) {
                 if (this.items != null) {
                     for (int i = 0; i < this.items.size(); ++i) {
                         ItemStack itemStack = this.items.getStack(i);
@@ -209,6 +202,15 @@ public class GraveEntity extends Entity implements InventoryChangedListener, Nam
         return false;
     }
 
+    @Nullable
+    public UUID getOwnerUuid() {
+        return (UUID)((Optional)this.dataTracker.get(OWNER)).orElse(null);
+    }
+
+    public void setOwnerUuid(@Nullable UUID uuid) {
+        this.dataTracker.set(OWNER, Optional.ofNullable(uuid));
+    }
+
     @Override
     protected void initDataTracker() {
         this.dataTracker.startTracking(OWNER, Optional.empty());
@@ -217,7 +219,9 @@ public class GraveEntity extends Entity implements InventoryChangedListener, Nam
 
     @Override
     protected void writeCustomDataToNbt(NbtCompound nbt) {
-        nbt.putUuid("Owner", this.dataTracker.get(OWNER).orElse(null));
+        if (this.getOwnerUuid() != null) {
+            nbt.putUuid("Owner", this.getOwnerUuid());
+        }
         NbtList nbtList = new NbtList();
 
         for(int i = 0; i < this.items.size(); ++i) {
@@ -235,7 +239,9 @@ public class GraveEntity extends Entity implements InventoryChangedListener, Nam
 
     @Override
     protected void readCustomDataFromNbt(NbtCompound nbt) {
-        this.dataTracker.set(OWNER, Optional.of(nbt.getUuid("Owner")));
+        if (nbt.getUuid("Owner") != null) {
+            this.setOwnerUuid(nbt.getUuid("Owner"));
+        }
         NbtList nbtList = nbt.getList("Items", NbtElement.COMPOUND_TYPE);
 
         for(int i = 0; i < nbtList.size(); ++i) {

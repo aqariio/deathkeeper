@@ -73,5 +73,8 @@ public class GraveScreenHandler extends ScreenHandler {
     public void close(PlayerEntity player) {
         super.close(player);
         this.inventory.onClose(player);
+        if (this.inventory.isEmpty()) {
+            this.grave.discard();
+        }
     }
 }
