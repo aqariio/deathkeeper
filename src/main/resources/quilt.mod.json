@@ -10,7 +10,7 @@
             "contributors": {
                 "aqario": "Author"
             },
-            "license": "MIT",
+            "license": "CC0-1.0",
             "icon": "assets/deathkeeper/icon.png"
         },
         "intermediate_mappings": "net.fabricmc:intermediary",
