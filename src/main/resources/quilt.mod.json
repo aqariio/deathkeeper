@@ -1,22 +1,22 @@
 {
     "schema_version": 1,
     "quilt_loader": {
-        "group": "aqario.deathwriter",
-        "id": "deathwriter",
+        "group": "aqario.deathkeeper",
+        "id": "deathkeeper",
         "version": "${version}",
         "metadata": {
-            "name": "Deathwriter",
+            "name": "Deathkeeper",
             "description": "Simple gravestone mod",
             "contributors": {
                 "aqario": "Author"
             },
             "license": "MIT",
-            "icon": "assets/deathwriter/icon.png"
+            "icon": "assets/deathkeeper/icon.png"
         },
         "intermediate_mappings": "net.fabricmc:intermediary",
         "entrypoints": {
-            "init": "aqario.deathwriter.common.Deathwriter",
-            "client_init": "aqario.deathwriter.client.DeathwriterClient"
+            "init": "aqario.deathkeeper.common.Deathkeeper",
+            "client_init": "aqario.deathkeeper.client.DeathkeeperClient"
         },
         "depends": [
             {
@@ -33,5 +33,5 @@
             }
         ]
     },
-    "mixin": "deathwriter.mixins.json"
+    "mixin": "deathkeeper.mixins.json"
 }
