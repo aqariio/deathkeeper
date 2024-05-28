@@ -4,6 +4,8 @@ import aqario.deathkeeper.common.network.packet.s2c.OpenGraveScreenS2CPacket;
 import aqario.deathkeeper.common.screen.GraveScreenHandler;
 import aqario.deathkeeper.mixin.ServerPlayerEntityAccessor;
 import aqario.deathkeeper.server.network.DeathkeeperServerPlayNetworkHandler;
+import dev.emi.trinkets.api.SlotReference;
+import dev.emi.trinkets.api.TrinketsApi;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ItemEntity;
@@ -29,10 +31,12 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.tag.FluidTags;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Pair;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
+import org.quiltmc.loader.api.QuiltLoader;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -50,7 +54,7 @@ public class GraveEntity extends Entity implements InventoryChangedListener, Nam
         this.items.addListener(this);
     }
 
-    public static GraveEntity create(ServerPlayerEntity player) {
+    public static GraveEntity create(PlayerEntity player) {
         GraveEntity grave = new GraveEntity(DeathkeeperEntityType.GRAVE, player.world);
         grave.setPos(player.getX(), player.getY(), player.getZ());
         grave.setCustomName(player.getName());
@@ -59,6 +63,13 @@ public class GraveEntity extends Entity implements InventoryChangedListener, Nam
         NbtList list = new NbtList();
         player.getInventory().writeNbt(list);
         grave.items.readNbtList(list);
+        if (QuiltLoader.isModLoaded("trinkets")) {
+            TrinketsApi.getTrinketComponent(player).ifPresent(trinkets -> {
+                for (Pair<SlotReference, ItemStack> slotReferenceItemStackPair : trinkets.getAllEquipped()) {
+                    grave.items.addStack(slotReferenceItemStackPair.getRight());
+                }
+            });
+        }
 
         grave.resetPosition();
         grave.refreshPosition();
