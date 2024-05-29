@@ -84,8 +84,11 @@ public class GraveEntity extends Entity implements InventoryChangedListener, Nam
 
     @Override
     public ActionResult interact(PlayerEntity player, Hand hand) {
+        if (!DeathkeeperConfig.openOtherGraves && !player.getUuid().equals(this.getOwnerUuid())) {
+            return super.interact(player, hand);
+        }
         if (!player.world.isClient && player.getStackInHand(hand).isEmpty()) {
-            openInventory((ServerPlayerEntity)player);
+            this.openInventory((ServerPlayerEntity)player);
             return ActionResult.CONSUME;
         }
         return super.interact(player, hand);

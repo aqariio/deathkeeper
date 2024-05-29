@@ -1,5 +1,6 @@
 package aqario.deathkeeper.mixin;
 
+import aqario.deathkeeper.common.config.DeathkeeperConfig;
 import aqario.deathkeeper.common.entity.GraveEntity;
 import dev.emi.trinkets.api.TrinketsApi;
 import net.minecraft.entity.EntityType;
@@ -31,6 +32,9 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 
     @Inject(method = "dropInventory", at = @At("HEAD"), cancellable = true)
     private void deathkeeper$dropInventory(CallbackInfo ci) {
+        if (!DeathkeeperConfig.enableGraves) {
+            return;
+        }
         if (!this.world.getGameRules().getBoolean(GameRules.KEEP_INVENTORY)) {
             this.vanishCursedItems();
             if (!this.inventory.isEmpty() || (QuiltLoader.isModLoaded("trinkets") && TrinketsApi.getTrinketComponent(this).isPresent() && !TrinketsApi.getTrinketComponent(this).get().getAllEquipped().isEmpty())) {

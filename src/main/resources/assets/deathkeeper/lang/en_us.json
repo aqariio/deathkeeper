@@ -3,5 +3,7 @@
   "entity.deathkeeper.grave": "Grave",
   "container.deathkeeper.grave": "%s's remains",
   "deathkeeper.midnightconfig.title": "Deathkeeper Config",
-  "deathkeeper.midnightconfig.highlightGraves": "Apply Glowing Effect to Graves"
+  "deathkeeper.midnightconfig.enableGraves": "Enable Graves",
+  "deathkeeper.midnightconfig.highlightGraves": "Highlight Graves",
+  "deathkeeper.midnightconfig.openOtherGraves": "Can Open Graves of Other Players"
 }
