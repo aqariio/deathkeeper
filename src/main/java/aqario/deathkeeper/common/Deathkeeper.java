@@ -1,5 +1,6 @@
 package aqario.deathkeeper.common;
 
+import aqario.deathkeeper.common.config.DeathkeeperConfig;
 import aqario.deathkeeper.common.entity.DeathkeeperEntityType;
 import aqario.deathkeeper.common.network.DeathkeeperMessages;
 import org.quiltmc.loader.api.ModContainer;
@@ -14,6 +15,7 @@ public class Deathkeeper implements ModInitializer {
     @Override
     public void onInitialize(ModContainer mod) {
         LOGGER.info("Loading {}", mod.metadata().name());
+        DeathkeeperConfig.init(ID, DeathkeeperConfig.class);
         DeathkeeperEntityType.init();
         DeathkeeperMessages.init();
     }

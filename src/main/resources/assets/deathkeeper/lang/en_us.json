@@ -1,7 +1,7 @@
 {
   "mod.deathkeeper.name": "Deathkeeper",
-
   "entity.deathkeeper.grave": "Grave",
-
-  "container.deathkeeper.grave": "%s's remains"
+  "container.deathkeeper.grave": "%s's remains",
+  "deathkeeper.midnightconfig.title": "Deathkeeper Config",
+  "deathkeeper.midnightconfig.highlightGraves": "Apply Glowing Effect to Graves"
 }
