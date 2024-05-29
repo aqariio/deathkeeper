@@ -1,5 +1,6 @@
 package aqario.deathkeeper.common.entity;
 
+import aqario.deathkeeper.common.config.DeathkeeperConfig;
 import aqario.deathkeeper.common.network.packet.s2c.OpenGraveScreenS2CPacket;
 import aqario.deathkeeper.common.screen.GraveScreenHandler;
 import aqario.deathkeeper.mixin.ServerPlayerEntityAccessor;
@@ -211,6 +212,11 @@ public class GraveEntity extends Entity implements InventoryChangedListener, Nam
     @Override
     public boolean isAttackable() {
         return false;
+    }
+
+    @Override
+    public boolean isGlowing() {
+        return DeathkeeperConfig.highlightGraves && this.world.isClient() && this.getOwnerUuid() != null || super.isGlowing();
     }
 
     @Nullable

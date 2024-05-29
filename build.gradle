@@ -16,6 +16,9 @@ repositories {
         name = "Ladysnake Libs"
         url = 'https://maven.ladysnake.org/releases'
     }
+    maven {
+        url = "https://api.modrinth.com/maven"
+    }
 }
 
 dependencies {
@@ -33,6 +36,10 @@ dependencies {
 
     modImplementation "dev.emi:trinkets:${project.trinkets_version}"
     modImplementation "dev.onyxstudios.cardinal-components-api:cardinal-components-base:5.0.0"
+    modImplementation ("com.terraformersmc:modmenu:${project.modmenu_version}") {
+        transitive = false
+    }
+    modImplementation include("maven.modrinth:midnightlib:${project.midnightlib_version}")
 }
 
 processResources {

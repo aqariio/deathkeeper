@@ -8,6 +8,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
+import org.quiltmc.loader.api.QuiltLoader;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -32,7 +33,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
     private void deathkeeper$dropInventory(CallbackInfo ci) {
         if (!this.world.getGameRules().getBoolean(GameRules.KEEP_INVENTORY)) {
             this.vanishCursedItems();
-            if (!this.inventory.isEmpty() || (TrinketsApi.getTrinketComponent(this).isPresent() && !TrinketsApi.getTrinketComponent(this).get().getAllEquipped().isEmpty())) {
+            if (!this.inventory.isEmpty() || (QuiltLoader.isModLoaded("trinkets") && TrinketsApi.getTrinketComponent(this).isPresent() && !TrinketsApi.getTrinketComponent(this).get().getAllEquipped().isEmpty())) {
                 GraveEntity grave = GraveEntity.create(PlayerEntity.class.cast(this));
                 this.getWorld().spawnEntity(grave);
                 ci.cancel();
