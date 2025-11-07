@@ -8,7 +8,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -88,12 +87,6 @@ public class GraveEntity extends Entity implements ContainerListener, MenuProvid
     @Override
     public AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player player) {
         return new GraveScreenHandler(syncId, playerInventory, this.items, this);
-    }
-
-    @NotNull
-    @Override
-    public Component getDisplayName() {
-        return super.getDisplayName(); // TODO: mixin since this overrides the entity display name
     }
 
     @Override

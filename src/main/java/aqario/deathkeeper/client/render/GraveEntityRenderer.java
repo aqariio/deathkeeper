@@ -5,8 +5,6 @@ import aqario.deathkeeper.common.entity.GraveEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -65,11 +63,7 @@ public class GraveEntityRenderer extends EntityRenderer<GraveEntity> {
 
     @Nullable
     private LocalPlayer tryGetOwner(GraveEntity entity) {
-        ClientLevel world = Minecraft.getInstance().level;
-        if(world != null) {
-            return (LocalPlayer) world.getPlayerByUUID(entity.getOwnerUuid());
-        }
-        return null;
+        return (LocalPlayer) entity.level().getPlayerByUUID(entity.getOwnerUuid());
     }
 
     @NotNull
