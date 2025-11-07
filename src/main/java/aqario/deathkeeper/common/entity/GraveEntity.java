@@ -1,186 +1,178 @@
 package aqario.deathkeeper.common.entity;
 
+import aqario.deathkeeper.common.Deathkeeper;
 import aqario.deathkeeper.common.config.DeathkeeperConfig;
+import aqario.deathkeeper.common.integration.TrinketsIntegration;
 import aqario.deathkeeper.common.screen.GraveScreenHandler;
-import dev.emi.trinkets.api.SlotReference;
-import dev.emi.trinkets.api.TrinketsApi;
-import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.MovementType;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.InventoryChangedListener;
-import net.minecraft.inventory.SimpleInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.registry.tag.FluidTags;
-import net.minecraft.screen.NamedScreenHandlerFactory;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Pair;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.world.*;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.UUID;
 
-public class GraveEntity extends Entity implements InventoryChangedListener, NamedScreenHandlerFactory {
-    public static final TrackedData<Optional<UUID>> OWNER = DataTracker.registerData(GraveEntity.class, TrackedDataHandlerRegistry.OPTIONAL_UUID);
-    public static final TrackedData<NbtCompound> INVENTORY = DataTracker.registerData(GraveEntity.class, TrackedDataHandlerRegistry.NBT_COMPOUND);
+public class GraveEntity extends Entity implements ContainerListener, MenuProvider {
+    public static final EntityDataAccessor<Optional<UUID>> OWNER = SynchedEntityData.defineId(GraveEntity.class, EntityDataSerializers.OPTIONAL_UUID);
+    public static final EntityDataAccessor<CompoundTag> INVENTORY = SynchedEntityData.defineId(GraveEntity.class, EntityDataSerializers.COMPOUND_TAG);
     public final float uniqueOffset;
-    private final SimpleInventory items;
+    public final SimpleContainer items;
 
-    public GraveEntity(EntityType<?> type, World world) {
+    public GraveEntity(EntityType<?> type, Level world) {
         super(type, world);
         this.uniqueOffset = this.random.nextFloat() * (float) Math.PI * 2.0F;
-        this.items = new SimpleInventory(54);
+        this.items = new SimpleContainer(54);
         this.items.addListener(this);
     }
 
-    public static GraveEntity create(PlayerEntity player) {
-        GraveEntity grave = new GraveEntity(DeathkeeperEntityType.GRAVE, player.getWorld());
-        grave.setPos(player.getX(), player.getY(), player.getZ());
+    public static GraveEntity create(Player player) {
+        GraveEntity grave = new GraveEntity(DeathkeeperEntityType.GRAVE, player.level());
+        grave.setPosRaw(player.getX(), player.getY(), player.getZ());
         grave.setCustomName(player.getName());
-        grave.dataTracker.set(OWNER, Optional.of(player.getUuid()));
+        grave.entityData.set(OWNER, Optional.of(player.getUUID()));
 
-        NbtList list = new NbtList();
-        player.getInventory().writeNbt(list);
-        grave.items.readNbtList(list);
-        if(FabricLoader.getInstance().isModLoaded("trinkets")) {
-            TrinketsApi.getTrinketComponent(player).ifPresent(trinkets -> {
-                for(Pair<SlotReference, ItemStack> slotReferenceItemStackPair : trinkets.getAllEquipped()) {
-                    grave.items.addStack(slotReferenceItemStackPair.getRight());
-                }
-            });
+        ListTag list = new ListTag();
+        player.getInventory().save(list);
+        grave.items.fromTag(list);
+        if(Deathkeeper.isTrinketsLoaded()) {
+            TrinketsIntegration.putTrinketsInGrave(player, grave);
         }
-
-        grave.resetPosition();
-        grave.refreshPosition();
+        grave.setOldPosAndRot();
+        grave.reapplyPosition();
         return grave;
     }
 
+    @NotNull
     @Override
-    protected Entity.MoveEffect getMoveEffect() {
-        return Entity.MoveEffect.NONE;
+    protected Entity.MovementEmission getMovementEmission() {
+        return Entity.MovementEmission.NONE;
     }
 
+    @NotNull
     @Override
-    public ActionResult interact(PlayerEntity player, Hand hand) {
-        if(!DeathkeeperConfig.openOtherGraves && !player.getUuid().equals(this.getOwnerUuid())) {
+    public InteractionResult interact(Player player, InteractionHand hand) {
+        if(!DeathkeeperConfig.openOtherGraves && !player.getUUID().equals(this.getOwnerUuid())) {
             return super.interact(player, hand);
         }
-        if(!player.getWorld().isClient()
-            && player.getStackInHand(hand).isEmpty()
-            && player instanceof ServerPlayerEntity serverPlayer
+        if(!player.level().isClientSide()
+            && player.getItemInHand(hand).isEmpty()
+            && player instanceof ServerPlayer serverPlayer
         ) {
-            serverPlayer.openHandledScreen(this);
-            return ActionResult.CONSUME;
+            serverPlayer.openMenu(this);
+            return InteractionResult.CONSUME;
         }
         return super.interact(player, hand);
     }
 
     @Nullable
     @Override
-    public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
+    public AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player player) {
         return new GraveScreenHandler(syncId, playerInventory, this.items, this);
     }
 
+    @NotNull
     @Override
-    public Text getDisplayName() {
+    public Component getDisplayName() {
         return super.getDisplayName(); // TODO: mixin since this overrides the entity display name
     }
 
     @Override
     public void tick() {
         super.tick();
-        this.prevX = this.getX();
-        this.prevY = this.getY();
-        this.prevZ = this.getZ();
-        Vec3d vec3d = this.getVelocity();
+        this.xo = this.getX();
+        this.yo = this.getY();
+        this.zo = this.getZ();
+        Vec3 vec3d = this.getDeltaMovement();
 
-        float f = this.getStandingEyeHeight() - 0.11111111F;
-        if(this.isTouchingWater() && this.getFluidHeight(FluidTags.WATER) > (double) f) {
+        float f = this.getEyeHeight() - 0.11111111F;
+        if(this.isInWater() && this.getFluidHeight(FluidTags.WATER) > (double) f) {
             this.applyWaterBuoyancy();
         }
         else if(this.isInLava() && this.getFluidHeight(FluidTags.LAVA) > (double) f) {
             this.applyLavaBuoyancy();
         }
-        else if(!this.hasNoGravity()) {
-            this.setVelocity(this.getVelocity().add(0.0, -0.04, 0.0));
+        else if(!this.isNoGravity()) {
+            this.setDeltaMovement(this.getDeltaMovement().add(0.0, -0.04, 0.0));
         }
 
-        if(this.getWorld().isClient()) {
-            this.noClip = false;
+        if(this.level().isClientSide()) {
+            this.noPhysics = false;
         }
         else {
-            this.noClip = !this.getWorld().isSpaceEmpty(this, this.getBoundingBox().contract(1.0E-7));
-            if(this.noClip) {
-                this.pushOutOfBlocks(this.getX(), (this.getBoundingBox().minY + this.getBoundingBox().maxY) / 2.0, this.getZ());
+            this.noPhysics = !this.level().noCollision(this, this.getBoundingBox().deflate(1.0E-7));
+            if(this.noPhysics) {
+                this.moveTowardsClosestSpace(this.getX(), (this.getBoundingBox().minY + this.getBoundingBox().maxY) / 2.0, this.getZ());
             }
         }
 
-        if(!this.isOnGround() || this.getVelocity().horizontalLengthSquared() > 1.0E-5F || (this.age + this.getId()) % 4 == 0) {
-            this.move(MovementType.SELF, this.getVelocity());
+        if(!this.onGround() || this.getDeltaMovement().horizontalDistanceSqr() > 1.0E-5F || (this.tickCount + this.getId()) % 4 == 0) {
+            this.move(MoverType.SELF, this.getDeltaMovement());
             float g = 0.98F;
-            if(this.isOnGround()) {
-                g = this.getWorld().getBlockState(new BlockPos((int) this.getX(), (int) (this.getY() - 1.0), (int) this.getZ())).getBlock().getSlipperiness() * 0.98F;
+            if(this.onGround()) {
+                g = this.level().getBlockState(new BlockPos((int) this.getX(), (int) (this.getY() - 1.0), (int) this.getZ())).getBlock().getFriction() * 0.98F;
             }
 
-            this.setVelocity(this.getVelocity().multiply(g, 0.98, g));
-            if(this.isOnGround()) {
-                Vec3d vec3d2 = this.getVelocity();
+            this.setDeltaMovement(this.getDeltaMovement().multiply(g, 0.98, g));
+            if(this.onGround()) {
+                Vec3 vec3d2 = this.getDeltaMovement();
                 if(vec3d2.y < 0.0) {
-                    this.setVelocity(vec3d2.multiply(1.0, -0.5, 1.0));
+                    this.setDeltaMovement(vec3d2.multiply(1.0, -0.5, 1.0));
                 }
             }
         }
 
-        this.velocityDirty |= this.updateWaterState();
-        if(!this.getWorld().isClient()) {
-            double d = this.getVelocity().subtract(vec3d).lengthSquared();
+        this.hasImpulse |= this.updateInWaterStateAndDoFluidPushing();
+        if(!this.level().isClientSide()) {
+            double d = this.getDeltaMovement().subtract(vec3d).lengthSqr();
             if(d > 0.01) {
-                this.velocityDirty = true;
+                this.hasImpulse = true;
             }
         }
     }
 
     private void applyWaterBuoyancy() {
-        Vec3d vec3d = this.getVelocity();
-        this.setVelocity(vec3d.x * 0.99F, vec3d.y + (double) (vec3d.y < 0.06F ? 5.0E-4F : 0.0F), vec3d.z * 0.99F);
+        Vec3 vec3d = this.getDeltaMovement();
+        this.setDeltaMovement(vec3d.x * 0.99F, vec3d.y + (double) (vec3d.y < 0.06F ? 5.0E-4F : 0.0F), vec3d.z * 0.99F);
     }
 
     private void applyLavaBuoyancy() {
-        Vec3d vec3d = this.getVelocity();
-        this.setVelocity(vec3d.x * 0.95F, vec3d.y + (double) (vec3d.y < 0.06F ? 5.0E-4F : 0.0F), vec3d.z * 0.95F);
+        Vec3 vec3d = this.getDeltaMovement();
+        this.setDeltaMovement(vec3d.x * 0.95F, vec3d.y + (double) (vec3d.y < 0.06F ? 5.0E-4F : 0.0F), vec3d.z * 0.95F);
     }
 
     @Override
-    public void onPlayerCollision(PlayerEntity player) {
-        if(!this.getWorld().isClient()) {
+    public void playerTouch(Player player) {
+        if(!this.level().isClientSide()) {
             if(!this.getBoundingBox().intersects(player.getBoundingBox())) {
                 return;
             }
 
-            if(player.getUuid().equals(this.dataTracker.get(OWNER).orElse(null))) {
+            if(player.getUUID().equals(this.entityData.get(OWNER).orElse(null))) {
                 if(this.items != null) {
-                    for(int i = 0; i < this.items.size(); ++i) {
-                        ItemStack itemStack = this.items.getStack(i);
+                    for(int i = 0; i < this.items.getContainerSize(); ++i) {
+                        ItemStack itemStack = this.items.getItem(i);
                         if(itemStack.isEmpty()) continue;
-                        this.dropStack(itemStack);
+                        this.spawnAtLocation(itemStack);
                     }
                 }
                 this.discard();
@@ -190,21 +182,21 @@ public class GraveEntity extends Entity implements InventoryChangedListener, Nam
 
     @Nullable
     @Override
-    public ItemEntity dropStack(ItemStack stack, float yOffset) {
+    public ItemEntity spawnAtLocation(ItemStack stack, float yOffset) {
         if(stack.isEmpty()) {
             return null;
         }
-        if(this.getWorld().isClient()) {
+        if(this.level().isClientSide()) {
             return null;
         }
-        ItemEntity itemEntity = new ItemEntity(this.getWorld(), this.getX(), this.getY() + (double) yOffset, this.getZ(), stack);
-        itemEntity.resetPickupDelay();
-        this.getWorld().spawnEntity(itemEntity);
+        ItemEntity itemEntity = new ItemEntity(this.level(), this.getX(), this.getY() + (double) yOffset, this.getZ(), stack);
+        itemEntity.setNoPickUpDelay();
+        this.level().addFreshEntity(itemEntity);
         return itemEntity;
     }
 
     @Override
-    public boolean canHit() {
+    public boolean isPickable() {
         return !this.isRemoved();
     }
 
@@ -214,38 +206,38 @@ public class GraveEntity extends Entity implements InventoryChangedListener, Nam
     }
 
     @Override
-    public boolean isGlowing() {
-        return DeathkeeperConfig.highlightGraves && this.getWorld().isClient() && this.getOwnerUuid() != null || super.isGlowing();
+    public boolean isCurrentlyGlowing() {
+        return DeathkeeperConfig.highlightGraves && this.level().isClientSide() && this.getOwnerUuid() != null || super.isCurrentlyGlowing();
     }
 
     @Nullable
     public UUID getOwnerUuid() {
-        return this.dataTracker.get(OWNER).orElse(null);
+        return this.entityData.get(OWNER).orElse(null);
     }
 
     public void setOwnerUuid(@Nullable UUID uuid) {
-        this.dataTracker.set(OWNER, Optional.ofNullable(uuid));
+        this.entityData.set(OWNER, Optional.ofNullable(uuid));
     }
 
     @Override
-    protected void initDataTracker() {
-        this.dataTracker.startTracking(OWNER, Optional.empty());
-        this.dataTracker.startTracking(INVENTORY, new NbtCompound());
+    protected void defineSynchedData() {
+        this.entityData.define(OWNER, Optional.empty());
+        this.entityData.define(INVENTORY, new CompoundTag());
     }
 
     @Override
-    protected void writeCustomDataToNbt(NbtCompound nbt) {
+    protected void addAdditionalSaveData(CompoundTag nbt) {
         if(this.getOwnerUuid() != null) {
-            nbt.putUuid("Owner", this.getOwnerUuid());
+            nbt.putUUID("Owner", this.getOwnerUuid());
         }
-        NbtList nbtList = new NbtList();
+        ListTag nbtList = new ListTag();
 
-        for(int i = 0; i < this.items.size(); ++i) {
-            ItemStack itemStack = this.items.getStack(i);
+        for(int i = 0; i < this.items.getContainerSize(); ++i) {
+            ItemStack itemStack = this.items.getItem(i);
             if(!itemStack.isEmpty()) {
-                NbtCompound nbtCompound = new NbtCompound();
+                CompoundTag nbtCompound = new CompoundTag();
                 nbtCompound.putByte("Slot", (byte) i);
-                itemStack.writeNbt(nbtCompound);
+                itemStack.save(nbtCompound);
                 nbtList.add(nbtCompound);
             }
         }
@@ -254,36 +246,35 @@ public class GraveEntity extends Entity implements InventoryChangedListener, Nam
     }
 
     @Override
-    protected void readCustomDataFromNbt(NbtCompound nbt) {
-        if(nbt.getUuid("Owner") != null) {
-            this.setOwnerUuid(nbt.getUuid("Owner"));
-        }
-        NbtList nbtList = nbt.getList("Items", NbtElement.COMPOUND_TYPE);
+    protected void readAdditionalSaveData(CompoundTag nbt) {
+        this.setOwnerUuid(nbt.getUUID("Owner"));
+        ListTag nbtList = nbt.getList("Items", Tag.TAG_COMPOUND);
 
         for(int i = 0; i < nbtList.size(); ++i) {
-            NbtCompound nbtCompound = nbtList.getCompound(i);
+            CompoundTag nbtCompound = nbtList.getCompound(i);
             int j = nbtCompound.getByte("Slot") & 255;
-            if(j < this.items.size()) {
-                this.items.setStack(j, ItemStack.fromNbt(nbtCompound));
+            if(j < this.items.getContainerSize()) {
+                this.items.setItem(j, ItemStack.of(nbtCompound));
             }
         }
     }
 
     public float getRotation(float tickDelta) {
-        return (this.age + tickDelta) / 20.0F + this.uniqueOffset;
+        return (this.tickCount + tickDelta) / 20.0F + this.uniqueOffset;
+    }
+
+    @NotNull
+    @Override
+    public SoundSource getSoundSource() {
+        return SoundSource.AMBIENT;
     }
 
     @Override
-    public SoundCategory getSoundCategory() {
-        return SoundCategory.AMBIENT;
-    }
-
-    @Override
-    public float getBodyYaw() {
+    public float getVisualRotationYInDegrees() {
         return 180.0F - this.getRotation(0.5F) / (float) (Math.PI * 2) * 360.0F;
     }
 
     @Override
-    public void onInventoryChanged(Inventory sender) {
+    public void containerChanged(Container sender) {
     }
 }

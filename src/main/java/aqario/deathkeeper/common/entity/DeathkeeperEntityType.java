@@ -2,24 +2,24 @@ package aqario.deathkeeper.common.entity;
 
 import aqario.deathkeeper.common.Deathkeeper;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityDimensions;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
 
 public class DeathkeeperEntityType {
     public static final EntityType<GraveEntity> GRAVE = register("grave",
         FabricEntityTypeBuilder.create()
             .entityFactory(GraveEntity::new)
-            .spawnGroup(SpawnGroup.MISC)
+            .spawnGroup(MobCategory.MISC)
             .dimensions(EntityDimensions.fixed(0.5F, 0.5F))
     );
 
     private static <T extends Entity> EntityType<T> register(String id, FabricEntityTypeBuilder<T> builder) {
-        return Registry.register(Registries.ENTITY_TYPE, new Identifier(Deathkeeper.ID, id), builder.build());
+        return Registry.register(BuiltInRegistries.ENTITY_TYPE, new ResourceLocation(Deathkeeper.ID, id), builder.build());
     }
 
     public static void init() {
