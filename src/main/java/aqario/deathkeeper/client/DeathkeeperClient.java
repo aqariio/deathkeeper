@@ -12,6 +12,7 @@ public class DeathkeeperClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         EntityRendererRegistry.register(DeathkeeperEntityType.GRAVE, GraveEntityRenderer::new);
-        EntityModelLayerRegistry.registerModelLayer(GraveEntityModel.LAYER, GraveEntityModel::getTexturedModelData);
+        EntityModelLayerRegistry.registerModelLayer(GraveEntityModel.DEFAULT_LAYER, GraveEntityModel::createDefaultLayer);
+        EntityModelLayerRegistry.registerModelLayer(GraveEntityModel.PLAYER_LAYER, GraveEntityModel::createPlayerLayer);
     }
 }

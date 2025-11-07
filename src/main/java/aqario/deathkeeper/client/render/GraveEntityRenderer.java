@@ -15,20 +15,35 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 public class GraveEntityRenderer extends EntityRenderer<GraveEntity> {
     private static final ResourceLocation DEFAULT_TEXTURE = new ResourceLocation("textures/entity/skeleton/skeleton.png");
-    private final GraveEntityModel model;
+    private final Map<Boolean, GraveEntityModel> models;
+    private GraveEntityModel model;
 
-    public GraveEntityRenderer(EntityRendererProvider.Context ctx) {
-        super(ctx);
-        this.model = new GraveEntityModel(ctx.bakeLayer(GraveEntityModel.LAYER));
+    public GraveEntityRenderer(EntityRendererProvider.Context context) {
+        super(context);
+        this.models = bakeModels(context);
+        this.model = this.models.get(false);
         this.shadowRadius = 0.15F;
         this.shadowStrength = 0.75F;
     }
 
+    private static Map<Boolean, GraveEntityModel> bakeModels(EntityRendererProvider.Context context) {
+        return Map.of(
+            false,
+            new GraveEntityModel(context.bakeLayer(GraveEntityModel.DEFAULT_LAYER)),
+            true,
+            new GraveEntityModel(context.bakeLayer(GraveEntityModel.PLAYER_LAYER))
+        );
+    }
+
     @Override
     public void render(GraveEntity entity, float yaw, float tickDelta, PoseStack matrices, MultiBufferSource vertexConsumers, int light) {
+        this.model = this.models.get(this.tryGetOwner(entity) != null);
         super.render(entity, yaw, tickDelta, matrices, vertexConsumers, light);
         matrices.pushPose();
         matrices.translate(0.0, 1.0, 0.0);
@@ -48,15 +63,21 @@ public class GraveEntityRenderer extends EntityRenderer<GraveEntity> {
         return entity.hasCustomName();
     }
 
+    @Nullable
+    private LocalPlayer tryGetOwner(GraveEntity entity) {
+        ClientLevel world = Minecraft.getInstance().level;
+        if(world != null) {
+            return (LocalPlayer) world.getPlayerByUUID(entity.getOwnerUuid());
+        }
+        return null;
+    }
+
     @NotNull
     @Override
     public ResourceLocation getTextureLocation(GraveEntity entity) {
-        ClientLevel world = Minecraft.getInstance().level;
-        if(world != null) {
-            LocalPlayer player = (LocalPlayer) world.getPlayerByUUID(entity.getOwnerUuid());
-            if(player != null) {
-                return player.getSkinTextureLocation();
-            }
+        LocalPlayer player = this.tryGetOwner(entity);
+        if(player != null) {
+            return player.getSkinTextureLocation();
         }
         return DEFAULT_TEXTURE;
     }
