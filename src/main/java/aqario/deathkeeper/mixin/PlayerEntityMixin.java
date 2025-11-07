@@ -3,13 +3,13 @@ package aqario.deathkeeper.mixin;
 import aqario.deathkeeper.common.config.DeathkeeperConfig;
 import aqario.deathkeeper.common.entity.GraveEntity;
 import dev.emi.trinkets.api.TrinketsApi;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
-import org.quiltmc.loader.api.QuiltLoader;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -32,12 +32,16 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 
     @Inject(method = "dropInventory", at = @At("HEAD"), cancellable = true)
     private void deathkeeper$dropInventory(CallbackInfo ci) {
-        if (!DeathkeeperConfig.enableGraves) {
+        if(!DeathkeeperConfig.enableGraves) {
             return;
         }
-        if (!this.world.getGameRules().getBoolean(GameRules.KEEP_INVENTORY)) {
+        if(!this.getWorld().getGameRules().getBoolean(GameRules.KEEP_INVENTORY)) {
             this.vanishCursedItems();
-            if (!this.inventory.isEmpty() || (QuiltLoader.isModLoaded("trinkets") && TrinketsApi.getTrinketComponent(this).isPresent() && !TrinketsApi.getTrinketComponent(this).get().getAllEquipped().isEmpty())) {
+            if(!this.inventory.isEmpty()
+                || (FabricLoader.getInstance().isModLoaded("trinkets")
+                && TrinketsApi.getTrinketComponent(this).isPresent()
+                && !TrinketsApi.getTrinketComponent(this).get().getAllEquipped().isEmpty())
+            ) {
                 GraveEntity grave = GraveEntity.create(PlayerEntity.class.cast(this));
                 this.getWorld().spawnEntity(grave);
                 ci.cancel();

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "deathkeeper",
+  "version": "${version}",
+  "name": "Deathkeeper",
+  "description": "Simple gravestone mod",
+  "authors": [
+    "aqario"
+  ],
+  "contact": {
+    "sources": "https://github.com/aqariio/deathkeeper"
+  },
+  "license": "MIT",
+  "icon": "assets/deathkeeper/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "aqario.deathkeeper.common.Deathkeeper"
+    ],
+    "client": [
+      "aqario.deathkeeper.client.DeathkeeperClient"
+    ]
+  },
+  "mixins": [
+    "deathkeeper.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.5",
+    "minecraft": "~1.20.1",
+    "java": ">=17",
+    "fabric-api": "*"
+  }
+}
