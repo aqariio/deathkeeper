@@ -1,6 +1,6 @@
-package aqario.deathkeeper.mixin;
+package aqario.gravegoods.mixin;
 
-import aqario.deathkeeper.common.entity.GraveEntity;
+import aqario.gravegoods.common.entity.GraveEntity;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
@@ -16,9 +16,9 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 @Mixin(ServerPlayer.class)
 public class ServerPlayerEntityMixin {
     @ModifyArg(method = "openMenu", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;send(Lnet/minecraft/network/protocol/Packet;)V"), index = 0)
-    private Packet<?> deathkeeper$changeGraveMenuName(Packet<?> packet, @Local AbstractContainerMenu screenHandler, @Local(argsOnly = true) @Nullable MenuProvider factory) {
+    private Packet<?> gravegoods$changeGraveMenuName(Packet<?> packet, @Local AbstractContainerMenu screenHandler, @Local(argsOnly = true) @Nullable MenuProvider factory) {
         if(factory instanceof GraveEntity grave) {
-            return new ClientboundOpenScreenPacket(screenHandler.containerId, screenHandler.getType(), Component.translatable("container.deathkeeper.grave", grave.getCustomName()));
+            return new ClientboundOpenScreenPacket(screenHandler.containerId, screenHandler.getType(), Component.translatable("container.gravegoods.grave", grave.getCustomName()));
         }
         return packet;
     }

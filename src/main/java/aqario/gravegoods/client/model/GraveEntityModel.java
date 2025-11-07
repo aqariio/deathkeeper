@@ -1,7 +1,7 @@
-package aqario.deathkeeper.client.model;
+package aqario.gravegoods.client.model;
 
-import aqario.deathkeeper.common.Deathkeeper;
-import aqario.deathkeeper.common.entity.GraveEntity;
+import aqario.gravegoods.common.GraveGoods;
+import aqario.gravegoods.common.entity.GraveEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.model.EntityModel;
@@ -12,8 +12,8 @@ import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.resources.ResourceLocation;
 
 public class GraveEntityModel extends EntityModel<GraveEntity> {
-    public static final ModelLayerLocation DEFAULT_LAYER = new ModelLayerLocation(new ResourceLocation(Deathkeeper.ID, "grave_default"), "main");
-    public static final ModelLayerLocation PLAYER_LAYER = new ModelLayerLocation(new ResourceLocation(Deathkeeper.ID, "grave_player"), "main");
+    public static final ModelLayerLocation DEFAULT_LAYER = new ModelLayerLocation(new ResourceLocation(GraveGoods.ID, "grave_default"), "main");
+    public static final ModelLayerLocation PLAYER_LAYER = new ModelLayerLocation(new ResourceLocation(GraveGoods.ID, "grave_player"), "main");
     private final ModelPart head;
 
     public GraveEntityModel(ModelPart root) {

@@ -1,0 +1,9 @@
+{
+  "mod.gravegoods.name": "Grave Goods",
+  "entity.gravegoods.grave": "Grave",
+  "container.gravegoods.grave": "%s's remains",
+  "gravegoods.midnightconfig.title": "Grave Goods Config",
+  "gravegoods.midnightconfig.enableGraves": "Enable Graves",
+  "gravegoods.midnightconfig.highlightGraves": "Highlight Graves",
+  "gravegoods.midnightconfig.openOtherGraves": "Can Open Graves of Other Players"
+}

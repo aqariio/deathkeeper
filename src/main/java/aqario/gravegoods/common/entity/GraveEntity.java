@@ -1,9 +1,9 @@
-package aqario.deathkeeper.common.entity;
+package aqario.gravegoods.common.entity;
 
-import aqario.deathkeeper.common.Deathkeeper;
-import aqario.deathkeeper.common.config.DeathkeeperConfig;
-import aqario.deathkeeper.common.integration.TrinketsIntegration;
-import aqario.deathkeeper.common.screen.GraveScreenHandler;
+import aqario.gravegoods.common.GraveGoods;
+import aqario.gravegoods.common.config.GraveGoodsConfig;
+import aqario.gravegoods.common.integration.TrinketsIntegration;
+import aqario.gravegoods.common.screen.GraveScreenHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -45,7 +45,7 @@ public class GraveEntity extends Entity implements ContainerListener, MenuProvid
     }
 
     public static GraveEntity create(Player player) {
-        GraveEntity grave = new GraveEntity(DeathkeeperEntityType.GRAVE, player.level());
+        GraveEntity grave = new GraveEntity(GraveGoodsEntityType.GRAVE, player.level());
         grave.setPosRaw(player.getX(), player.getY(), player.getZ());
         grave.setCustomName(player.getName());
         grave.entityData.set(OWNER, Optional.of(player.getUUID()));
@@ -53,7 +53,7 @@ public class GraveEntity extends Entity implements ContainerListener, MenuProvid
         ListTag list = new ListTag();
         player.getInventory().save(list);
         grave.items.fromTag(list);
-        if(Deathkeeper.isTrinketsLoaded()) {
+        if(GraveGoods.isTrinketsLoaded()) {
             TrinketsIntegration.putTrinketsInGrave(player, grave);
         }
         grave.setOldPosAndRot();
@@ -70,7 +70,7 @@ public class GraveEntity extends Entity implements ContainerListener, MenuProvid
     @NotNull
     @Override
     public InteractionResult interact(Player player, InteractionHand hand) {
-        if(!DeathkeeperConfig.openOtherGraves && !player.getUUID().equals(this.getOwnerUuid())) {
+        if(!GraveGoodsConfig.openOtherGraves && !player.getUUID().equals(this.getOwnerUuid())) {
             return super.interact(player, hand);
         }
         if(!player.level().isClientSide()
@@ -200,7 +200,7 @@ public class GraveEntity extends Entity implements ContainerListener, MenuProvid
 
     @Override
     public boolean isCurrentlyGlowing() {
-        return DeathkeeperConfig.highlightGraves && this.level().isClientSide() && this.getOwnerUuid() != null || super.isCurrentlyGlowing();
+        return GraveGoodsConfig.highlightGraves && this.level().isClientSide() && this.getOwnerUuid() != null || super.isCurrentlyGlowing();
     }
 
     @Nullable

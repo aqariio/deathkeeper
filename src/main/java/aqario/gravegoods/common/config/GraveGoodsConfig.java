@@ -1,8 +1,8 @@
-package aqario.deathkeeper.common.config;
+package aqario.gravegoods.common.config;
 
 import eu.midnightdust.lib.config.MidnightConfig;
 
-public class DeathkeeperConfig extends MidnightConfig {
+public class GraveGoodsConfig extends MidnightConfig {
     @Entry
     public static boolean enableGraves = true;
     @Entry

@@ -1,9 +1,9 @@
-package aqario.deathkeeper.mixin;
+package aqario.gravegoods.mixin;
 
-import aqario.deathkeeper.common.Deathkeeper;
-import aqario.deathkeeper.common.config.DeathkeeperConfig;
-import aqario.deathkeeper.common.entity.GraveEntity;
-import aqario.deathkeeper.common.integration.TrinketsIntegration;
+import aqario.gravegoods.common.GraveGoods;
+import aqario.gravegoods.common.config.GraveGoodsConfig;
+import aqario.gravegoods.common.entity.GraveEntity;
+import aqario.gravegoods.common.integration.TrinketsIntegration;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
@@ -32,8 +32,8 @@ public abstract class PlayerEntityMixin extends LivingEntity {
     }
 
     @Inject(method = "dropEquipment", at = @At("HEAD"), cancellable = true)
-    private void deathkeeper$dropInventory(CallbackInfo ci) {
-        if(!DeathkeeperConfig.enableGraves) {
+    private void gravegoods$dropInventory(CallbackInfo ci) {
+        if(!GraveGoodsConfig.enableGraves) {
             return;
         }
         if(!this.level().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY)) {
@@ -50,7 +50,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
 
     @Unique
     private boolean hasTrinkets() {
-        if(Deathkeeper.isTrinketsLoaded()) {
+        if(GraveGoods.isTrinketsLoaded()) {
             return TrinketsIntegration.hasTrinkets(this);
         }
         return false;

@@ -1,7 +1,7 @@
-package aqario.deathkeeper.client.render;
+package aqario.gravegoods.client.render;
 
-import aqario.deathkeeper.client.model.GraveEntityModel;
-import aqario.deathkeeper.common.entity.GraveEntity;
+import aqario.gravegoods.client.model.GraveEntityModel;
+import aqario.gravegoods.common.entity.GraveEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;

@@ -1,28 +1,28 @@
 {
   "schemaVersion": 1,
-  "id": "deathkeeper",
+  "id": "gravegoods",
   "version": "${version}",
-  "name": "Deathkeeper",
+  "name": "Grave Goods",
   "description": "Simple gravestone mod",
   "authors": [
     "aqario"
   ],
   "contact": {
-    "sources": "https://github.com/aqariio/deathkeeper"
+    "sources": "https://github.com/aqariio/gravegoods"
   },
   "license": "MIT",
-  "icon": "assets/deathkeeper/icon.png",
+  "icon": "assets/gravegoods/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [
-      "aqario.deathkeeper.common.Deathkeeper"
+      "aqario.gravegoods.common.GraveGoods"
     ],
     "client": [
-      "aqario.deathkeeper.client.DeathkeeperClient"
+      "aqario.gravegoods.client.GraveGoodsClient"
     ]
   },
   "mixins": [
-    "deathkeeper.mixins.json"
+    "gravegoods.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.16.10",

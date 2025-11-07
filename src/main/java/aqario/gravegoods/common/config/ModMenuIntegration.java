@@ -1,6 +1,6 @@
-package aqario.deathkeeper.common.config;
+package aqario.gravegoods.common.config;
 
-import aqario.deathkeeper.common.Deathkeeper;
+import aqario.gravegoods.common.GraveGoods;
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 import eu.midnightdust.lib.config.MidnightConfig;
@@ -9,7 +9,7 @@ import eu.midnightdust.lib.config.MidnightConfig;
 public class ModMenuIntegration implements ModMenuApi {
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
-        return parent -> MidnightConfig.getScreen(parent, Deathkeeper.ID);
+        return parent -> MidnightConfig.getScreen(parent, GraveGoods.ID);
     }
 }
 

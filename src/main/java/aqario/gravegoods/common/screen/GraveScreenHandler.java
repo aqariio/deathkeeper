@@ -1,6 +1,6 @@
-package aqario.deathkeeper.common.screen;
+package aqario.gravegoods.common.screen;
 
-import aqario.deathkeeper.common.entity.GraveEntity;
+import aqario.gravegoods.common.entity.GraveEntity;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;

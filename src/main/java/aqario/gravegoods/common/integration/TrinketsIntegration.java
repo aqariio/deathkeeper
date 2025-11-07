@@ -1,6 +1,6 @@
-package aqario.deathkeeper.common.integration;
+package aqario.gravegoods.common.integration;
 
-import aqario.deathkeeper.common.entity.GraveEntity;
+import aqario.gravegoods.common.entity.GraveEntity;
 import dev.emi.trinkets.api.SlotReference;
 import dev.emi.trinkets.api.TrinketsApi;
 import net.minecraft.util.Tuple;

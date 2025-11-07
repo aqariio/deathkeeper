@@ -1,6 +1,6 @@
-package aqario.deathkeeper.common.entity;
+package aqario.gravegoods.common.entity;
 
-import aqario.deathkeeper.common.Deathkeeper;
+import aqario.gravegoods.common.GraveGoods;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -10,7 +10,7 @@ import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 
-public class DeathkeeperEntityType {
+public class GraveGoodsEntityType {
     public static final EntityType<GraveEntity> GRAVE = register("grave",
         FabricEntityTypeBuilder.create()
             .entityFactory(GraveEntity::new)
@@ -19,7 +19,7 @@ public class DeathkeeperEntityType {
     );
 
     private static <T extends Entity> EntityType<T> register(String id, FabricEntityTypeBuilder<T> builder) {
-        return Registry.register(BuiltInRegistries.ENTITY_TYPE, new ResourceLocation(Deathkeeper.ID, id), builder.build());
+        return Registry.register(BuiltInRegistries.ENTITY_TYPE, new ResourceLocation(GraveGoods.ID, id), builder.build());
     }
 
     public static void init() {
